@@ -1,0 +1,53 @@
+{
+  "title": "Capterra Reviews Scraper input",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "products": {
+      "title": "Capterra products",
+      "type": "array",
+      "description": "Products to scrape. Each entry can be a Capterra URL (e.g. https://www.capterra.com/p/164283/Zendesk/ or .../reviews/), an ID/slug pair (e.g. 164283/Zendesk), or a plain product name (e.g. zendesk), which is resolved with Capterra search.",
+      "editor": "stringList",
+      "prefill": ["https://www.capterra.com/p/164283/Zendesk/"]
+    },
+    "maxReviewsPerProduct": {
+      "title": "Max reviews per product",
+      "type": "integer",
+      "description": "Stop after this many reviews for each product. 0 means no limit. Capterra only exposes the first 100 review pages (2,500 reviews) per product.",
+      "minimum": 0,
+      "default": 0
+    },
+    "maxPagesPerProduct": {
+      "title": "Max pages per product",
+      "type": "integer",
+      "description": "Stop after this many review pages (25 reviews each) for each product. 0 means no limit.",
+      "minimum": 0,
+      "default": 0
+    },
+    "maxConcurrency": {
+      "title": "Max concurrency",
+      "type": "integer",
+      "description": "Maximum number of browser pages open at the same time.",
+      "minimum": 1,
+      "maximum": 20,
+      "default": 3
+    },
+    "maxRequestRetries": {
+      "title": "Max request retries",
+      "type": "integer",
+      "description": "How many times a failed or blocked page is retried, each time with a fresh proxy session.",
+      "minimum": 0,
+      "maximum": 20,
+      "default": 8
+    },
+    "proxyConfiguration": {
+      "title": "Proxy configuration",
+      "type": "object",
+      "description": "Capterra sits behind Cloudflare. Apify Proxy is strongly recommended; residential proxies give the best success rate.",
+      "editor": "proxy",
+      "prefill": { "useApifyProxy": true },
+      "default": { "useApifyProxy": true }
+    }
+  },
+  "required": ["products"]
+}

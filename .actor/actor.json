@@ -1,0 +1,11 @@
+{
+  "actorSpecification": 1,
+  "name": "capterra-reviews-scraper",
+  "title": "Capterra Reviews Scraper",
+  "description": "Scrape all reviews from any Capterra software listing page. Extracts ratings, pros/cons, reviewer details and dates.",
+  "version": "0.1",
+  "buildTag": "latest",
+  "environmentVariables": [],
+  "dockerfile": "./Dockerfile",
+  "output": "./output.json"
+}

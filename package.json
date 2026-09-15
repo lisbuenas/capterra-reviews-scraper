@@ -1,0 +1,20 @@
+{
+  "name": "capterra-reviews-scraper",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Apify actor that scrapes all reviews from Capterra software listings: ratings, pros/cons, reviewer details and dates.",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "apify": "^3.7.2",
+    "crawlee": "^3.18.1",
+    "playwright": "*"
+  },
+  "scripts": {
+    "start": "node src/main.js",
+    "test": "echo \"Error: oops, the actor has no tests yet, sad!\" && exit 1"
+  },
+  "author": "lisbuenas",
+  "license": "ISC"
+}

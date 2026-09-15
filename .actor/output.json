@@ -1,0 +1,11 @@
+{
+  "actorOutputSchemaVersion": 1,
+  "title": "Capterra reviews",
+  "properties": {
+    "results": {
+      "type": "string",
+      "title": "Review items",
+      "template": "{{links.apiDefaultDatasetUrl}}/items"
+    }
+  }
+}
