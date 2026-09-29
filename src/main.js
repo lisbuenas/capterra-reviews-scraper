@@ -455,14 +455,46 @@ const crawler = new PlaywrightCrawler({
     preNavigationHooks: [
         async ({ page }, gotoOptions) => {
             gotoOptions.waitUntil = 'domcontentloaded';
-            // Explicitly hide Playwright automation traces before any page script runs.
-            // --disable-blink-features=AutomationControlled (in launchOptions) removes
-            // navigator.webdriver, but some Cloudflare checks also look for CDP-injected
-            // window.cdc_* variables. addInitScript runs before page JS, so it beats them.
+            // Hide automation fingerprints before any page script runs so Cloudflare
+            // Turnstile resolves automatically. Patches: navigator.webdriver, CDP globals,
+            // WebGL software-renderer string (Mesa/llvmpipe betrays XVFB on a server),
+            // Permissions API inconsistency, and missing navigator.plugins (0 in headless).
             await page.addInitScript(() => {
+                // navigator.webdriver
                 Object.defineProperty(navigator, 'webdriver', { get: () => undefined, configurable: true });
+                // CDP cdc_* artefacts (rare with Playwright but cheap to clear)
                 for (const key of Object.keys(window).filter((k) => k.startsWith('cdc_'))) {
-                    try { delete window[key]; } catch { /* non-configurable props stay */ }
+                    try { delete window[key]; } catch { /* non-configurable */ }
+                }
+                // WebGL vendor/renderer: XVFB uses Mesa/llvmpipe; spoof real Intel hardware
+                const _wp = (ctx) => {
+                    const orig = ctx.prototype.getParameter;
+                    ctx.prototype.getParameter = function (p) {
+                        if (p === 37445) return 'Intel Inc.';
+                        if (p === 37446) return 'Intel(R) Iris(TM) Plus Graphics 640';
+                        return orig.call(this, p);
+                    };
+                };
+                _wp(WebGLRenderingContext);
+                if (typeof WebGL2RenderingContext !== 'undefined') _wp(WebGL2RenderingContext);
+                // Permissions: avoid 'denied' for notifications (looks like sandboxed env)
+                const _pq = navigator.permissions?.query?.bind(navigator.permissions);
+                if (_pq) {
+                    navigator.permissions.query = (p) =>
+                        p?.name === 'notifications'
+                            ? Promise.resolve({ state: Notification.permission, onchange: null })
+                            : _pq(p);
+                }
+                // Plugins: headless Chrome has 0; real Chrome always has a few
+                if (navigator.plugins.length === 0) {
+                    Object.defineProperty(navigator, 'plugins', {
+                        get: () => Object.assign(
+                            [{ name: 'Chrome PDF Plugin', filename: 'internal-pdf-viewer' },
+                             { name: 'Chrome PDF Viewer', filename: 'mhjfbmdgcfjbbpaeojofohoefgiehjai' },
+                             { name: 'Native Client',     filename: 'internal-nacl-plugin' }],
+                            { length: 3 }),
+                    });
+                    Object.defineProperty(navigator, 'mimeTypes', { get: () => ({ length: 2 }) });
                 }
             });
             // Save bandwidth: reviews are in the HTML, images/fonts/media aren't needed.
