@@ -18,6 +18,9 @@
  */
 import { Actor, log } from 'apify';
 import { PlaywrightCrawler, playwrightUtils } from 'crawlee';
+import { chromium as stealthChromium } from 'playwright-extra';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+stealthChromium.use(StealthPlugin());
 
 const BASE_URL = 'https://www.capterra.com';
 const REVIEWS_PER_PAGE = 25;
@@ -447,6 +450,7 @@ const crawler = new PlaywrightCrawler({
         useFingerprints: false,
     },
     launchContext: {
+        launcher: stealthChromium,
         launchOptions: {
             args: ['--disable-blink-features=AutomationControlled'],
         },
