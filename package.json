@@ -10,8 +10,8 @@
     "apify": "^3.7.2",
     "crawlee": "^3.18.1",
     "playwright": "*",
-    "playwright-extra": "^3.3.6",
-    "puppeteer-extra-plugin-stealth": "^2.11.2"
+    "playwright-extra": "latest",
+    "puppeteer-extra-plugin-stealth": "latest"
   },
   "scripts": {
     "start": "node src/main.js",
