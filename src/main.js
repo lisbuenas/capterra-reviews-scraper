@@ -412,7 +412,7 @@ async function waitForChallenge(page, session) {
         await page.waitForFunction(
             () => !/just a moment|attention required|access denied/i.test(document.title),
             null,
-            { timeout: 30_000 },
+            { timeout: 90_000 },
         );
         await page.waitForLoadState('domcontentloaded');
     } catch {
