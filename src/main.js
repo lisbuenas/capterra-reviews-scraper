@@ -455,6 +455,16 @@ const crawler = new PlaywrightCrawler({
     preNavigationHooks: [
         async ({ page }, gotoOptions) => {
             gotoOptions.waitUntil = 'domcontentloaded';
+            // Explicitly hide Playwright automation traces before any page script runs.
+            // --disable-blink-features=AutomationControlled (in launchOptions) removes
+            // navigator.webdriver, but some Cloudflare checks also look for CDP-injected
+            // window.cdc_* variables. addInitScript runs before page JS, so it beats them.
+            await page.addInitScript(() => {
+                Object.defineProperty(navigator, 'webdriver', { get: () => undefined, configurable: true });
+                for (const key of Object.keys(window).filter((k) => k.startsWith('cdc_'))) {
+                    try { delete window[key]; } catch { /* non-configurable props stay */ }
+                }
+            });
             // Save bandwidth: reviews are in the HTML, images/fonts/media aren't needed.
             await playwrightUtils.blockRequests(page, {
                 extraUrlPatterns: ['googletagmanager', 'doubleclick', 'hotjar', 'segment.io'],
