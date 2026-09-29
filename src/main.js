@@ -40,7 +40,7 @@ const {
     maxPagesPerProduct = 0,
     maxConcurrency = 3,
     maxRequestRetries = 8,
-    proxyConfiguration: proxyInput = { useApifyProxy: true },
+    proxyConfiguration: proxyInput = { useApifyProxy: true, apifyProxyGroups: ['RESIDENTIAL'] },
 } = input;
 
 // Accept the conventional `startUrls` shape too ([{ url }] or [string]).
