@@ -492,7 +492,7 @@ const crawler = new PlaywrightCrawler({
     launchContext: {
         launcher: stealthChromium,
         launchOptions: {
-            args: ['--disable-blink-features=AutomationControlled'],
+            args: ['--ignore-certificate-errors', '--disable-blink-features=AutomationControlled'],
         },
     },
 
