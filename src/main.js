@@ -408,9 +408,48 @@ const isChallengeTitle = (title) => /just a moment|attention required|access den
 
 /** Waits for Cloudflare's JS challenge to resolve; throws (-> retry with a new session) if it doesn't. */
 async function waitForChallenge(page, session) {
-    if (!isChallengeTitle(await page.title())) return;
+    const title = await page.title();
+    if (!isChallengeTitle(title)) return;
 
-    log.debug(`Cloudflare challenge on ${page.url()}, waiting...`);
+    log.info(`Cloudflare challenge on ${page.url()}, saving diagnostic screenshot and waiting...`);
+
+    // Save a diagnostic screenshot to the KV store so we can inspect what
+    // Cloudflare is showing (passive managed challenge vs. interactive CAPTCHA).
+    try {
+        const store = await Actor.openKeyValueStore();
+        const screenshot = await page.screenshot();
+        const key = `cf-challenge-${Date.now()}`;
+        await store.setValue(key, screenshot, { contentType: 'image/png' });
+        log.info(`Challenge screenshot saved as "${key}" in the default KV store.`);
+    } catch (e) {
+        log.warning(`Could not save challenge screenshot: ${e.message}`);
+    }
+
+    // Simulate human-like mouse movement; some managed challenges respond to activity.
+    try {
+        const vp = page.viewportSize() ?? { width: 1280, height: 720 };
+        await page.mouse.move(vp.width * 0.4, vp.height * 0.4);
+        await page.waitForTimeout(700);
+        await page.mouse.move(vp.width * 0.6, vp.height * 0.5);
+        await page.waitForTimeout(500);
+    } catch { /* ignore */ }
+
+    // If Cloudflare renders an interactive Turnstile iframe, try clicking the checkbox.
+    try {
+        const cfFrame = page.frames().find((f) => f.url().includes('challenges.cloudflare.com'));
+        if (cfFrame) {
+            log.info('Turnstile iframe detected, attempting checkbox interaction.');
+            await cfFrame.waitForSelector('input[type="checkbox"]', { timeout: 5_000 }).catch(() => {});
+            const checkbox = await cfFrame.$('input[type="checkbox"]');
+            if (checkbox) {
+                await checkbox.click();
+                log.info('Clicked Turnstile checkbox.');
+            }
+        }
+    } catch (e) {
+        log.debug(`Turnstile interaction skipped: ${e.message}`);
+    }
+
     try {
         await page.waitForFunction(
             () => !/just a moment|attention required|access denied/i.test(document.title),
@@ -418,6 +457,7 @@ async function waitForChallenge(page, session) {
             { timeout: 90_000 },
         );
         await page.waitForLoadState('domcontentloaded');
+        log.info(`Cloudflare challenge resolved on ${page.url()}.`);
     } catch {
         session?.retire();
         throw new Error('Blocked by Cloudflare challenge, retrying with a new session.');
